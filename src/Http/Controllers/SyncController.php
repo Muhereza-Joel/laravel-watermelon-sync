@@ -5,7 +5,6 @@ namespace MuherezaJoel\LaravelWatermelonSync\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 class SyncController extends Controller
@@ -30,7 +29,7 @@ class SyncController extends Controller
             if ($lastSyncTime) {
                 // Incremental Pull
                 $changes[$tableName] = [
-                    'created' => [], // Watermelon handles new vs update via timestamps
+                    'created' => [],
                     'updated' => $query->where('updated_at', '>', $lastSyncTime)->get()->map(fn($r) => $this->serialize($r)),
                     'deleted' => $this->getDeletedIds($instance, $request, $lastSyncTime),
                 ];
@@ -66,8 +65,9 @@ class SyncController extends Controller
                     $data = $this->mapIncomingRecord($record, $instance);
                     $data[$syncKey] = $record['id'];
 
-                    if (Schema::hasColumn($instance->getTable(), 'organisation_id')) {
-                        $data['organisation_id'] = $request->user()->organisation_id;
+                    // CLEANED: Use trait method to inject tenant/user IDs
+                    if (method_exists($instance, 'prepareSyncData')) {
+                        $data = $instance->prepareSyncData($data, $request->user());
                     }
 
                     $upserts[] = $data;
@@ -90,8 +90,9 @@ class SyncController extends Controller
     {
         $query = method_exists($instance, 'withTrashed') ? $instance::withTrashed() : $instance::query();
 
-        if (Schema::hasColumn($instance->getTable(), 'user_id') && !$instance->isGlobalSyncModel()) {
-            $query->where('user_id', $request->user()->id);
+        // CLEANED: Logic moved to model trait to handle user/org scoping dynamically
+        if (method_exists($instance, 'applySyncScopes')) {
+            return $instance->applySyncScopes($query, $request->user());
         }
 
         return $query;
@@ -141,9 +142,13 @@ class SyncController extends Controller
     {
         if (!method_exists($instance, 'withTrashed')) return [];
 
-        return $instance::onlyTrashed()
-            ->where('deleted_at', '>', $since)
-            ->pluck($instance->getSyncKeyName())
-            ->toArray();
+        $query = $instance::onlyTrashed()->where('deleted_at', '>', $since);
+
+        // Apply scopes to deletion queries as well
+        if (method_exists($instance, 'applySyncScopes')) {
+            $query = $instance->applySyncScopes($query, $request->user());
+        }
+
+        return $query->pluck($instance->getSyncKeyName())->toArray();
     }
 }

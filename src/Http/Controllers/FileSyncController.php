@@ -14,8 +14,15 @@ class FileSyncController extends Controller
         $lastSyncedAt = $request->input('last_synced_at', 0);
         $lastSyncDate = Carbon::createFromTimestampMs($lastSyncedAt);
 
+        // We need to ensure users only see files attached to models they own
         $files = Media::where('updated_at', '>', $lastSyncDate)
             ->where('collection_name', 'images')
+            ->whereHasMorph('model', '*', function ($query) use ($request) {
+                // If the parent model uses the Syncable trait, apply its scopes
+                if (method_exists($query->getModel(), 'applySyncScopes')) {
+                    $query->getModel()->applySyncScopes($query, $request->user());
+                }
+            })
             ->get()
             ->map(fn($media) => [
                 'id' => $media->id,
@@ -39,7 +46,21 @@ class FileSyncController extends Controller
         ]);
 
         $modelClass = config("sync.models." . $request->associated_entity);
-        $model = $modelClass::where((new $modelClass)->getSyncKeyName(), $request->associated_id)->firstOrFail();
+        if (!$modelClass) {
+            return response()->json(['error' => 'Invalid entity'], 400);
+        }
+
+        $instance = new $modelClass;
+
+        // Use the trait's scoping logic to find the record. 
+        // This prevents a user from uploading a file to an ID they don't own.
+        $query = $modelClass::where($instance->getSyncKeyName(), $request->associated_id);
+
+        if (method_exists($instance, 'applySyncScopes')) {
+            $instance->applySyncScopes($query, $request->user());
+        }
+
+        $model = $query->firstOrFail();
 
         $media = $model->addMediaFromRequest('file')->toMediaCollection('images');
 
