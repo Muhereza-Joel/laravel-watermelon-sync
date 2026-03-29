@@ -58,3 +58,40 @@ class Contact extends Model
     protected bool $isGlobalSync = false;
 }
 ```
+
+### 2. Database Migration
+
+Ensure your tables have the identifier column required by WatermelonDB.
+
+```php
+Schema::table('contacts', function (Blueprint $table) {
+    $table->string('watermelon_id')->unique()->nullable();
+    // OR $table->uuid('uuid')->unique();
+});
+```
+
+### 3. Register Models
+
+Open config/sync.php and map your frontend table names to your Laravel models:
+
+```php
+return [
+    'models' => [
+        'contacts' => \App\Models\Contact::class,
+        'tasks' => \App\Models\Task::class,
+    ],
+    'windows' => [
+        'tasks' => '1 month', // Only pull tasks from the last month
+    ],
+];
+```
+
+## API Endpoints
+
+The package automatically registers the following routes under the auth:sanctum middleware:
+
+## Example Pull Request
+
+```http
+GET /api/sync/pull?last_pulled_at=1672531200000&table=contacts
+```
