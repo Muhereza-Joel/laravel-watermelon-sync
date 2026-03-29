@@ -29,7 +29,7 @@ composer require muhereza-joel/laravel-watermelon-sync
 ### 3. Publish Configuration
 
 ```bash
-php artisan vendor:publish --tag="sync-config"
+php artisan vendor:publish --tag="watermelon-sync-config"
 ```
 
 ## Setup
