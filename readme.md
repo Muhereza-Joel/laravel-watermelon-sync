@@ -92,6 +92,31 @@ The package automatically registers the following routes under the auth:sanctum 
 
 ## Example Pull Request
 
-```http
-GET /api/sync/pull?last_pulled_at=1672531200000&table=contacts
-```
+### Pull Changes
+
+`GET /api/sync/pull`  
+Pull changes from server to client.
+
+### Push Changes
+
+`POST /api/sync/push`  
+Push changes from client to server.
+
+### File Status
+
+`GET /api/sync/files/status`  
+Check for new files to download.
+
+### Upload File
+
+`POST /api/sync/files/upload`  
+Upload a file associated with an entity.
+
+## Sync API Endpoints Reference Table
+
+| Method | Endpoint               | Description                             |
+| ------ | ---------------------- | --------------------------------------- |
+| GET    | /api/sync/pull         | Pull changes from server to client      |
+| POST   | /api/sync/push         | Push changes from client to server      |
+| GET    | /api/sync/files/status | Check for new files to download         |
+| POST   | /api/sync/files/upload | Upload a file associated with an entity |
