@@ -1,0 +1,41 @@
+{
+    "name": "muhereza-joel/laravel-watermelon-sync",
+    "description": "Sync Engine that works with WatermelonDB",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "MuherezaJoel\\LaravelWatermelonSync\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "MuherezaJoel\\LaravelWatermelonSync\\Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Muhereza Joel",
+            "email": "muherezajoel40@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "MuherezaJoel\\LaravelWatermelonSync\\Providers\\SyncServiceProvider"
+            ]
+        }
+    },
+    "require": {
+        "php": "^8.1",
+        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+        "spatie/laravel-medialibrary": "^10.0|^11.0|^12.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0",
+        "laravel/pint": "^1.0",
+        "phpunit/phpunit": "^10.0"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
